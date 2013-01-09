@@ -79,25 +79,29 @@ public class RedisScheduler {
 	 * @param timestamp
 	 * @throws UnsupportedEncodingException
 	 */
-	public void schedule(Class<? extends RedisSchedulerJob> jobClass, Map<String, String> parameters, long timestamp) throws UnsupportedEncodingException {
-		List<String> entries = new ArrayList<String>();
-		for (Entry<String, String> entry : parameters.entrySet()) {
+	public void schedule(Class<? extends RedisSchedulerJob> jobClass, Map<String, String> parameters, long timestamp) {
+		try {
+			List<String> entries = new ArrayList<String>();
+			for (Entry<String, String> entry : parameters.entrySet()) {
+				StringBuilder sb = new StringBuilder();
+					sb.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
+				sb.append("=");
+				sb.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
+				entries.add(sb.toString());
+			}
+			String paramsString = join(entries, "&");
+			
 			StringBuilder sb = new StringBuilder();
-			sb.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
-			sb.append("=");
-			sb.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
-			entries.add(sb.toString());
+			sb.append("class=");
+			sb.append(jobClass.getName());
+			sb.append("&params=");		
+			sb.append(URLEncoder.encode(paramsString, "UTF-8"));
+			byte[] data = sb.toString().getBytes("UTF-8");
+			
+			operations.scheduleData(data, timestamp);
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException(e);
 		}
-		String paramsString = join(entries, "&");
-		
-		StringBuilder sb = new StringBuilder();
-		sb.append("class=");
-		sb.append(jobClass.getName());
-		sb.append("&params=");		
-		sb.append(URLEncoder.encode(paramsString, "UTF-8"));
-		byte[] data = sb.toString().getBytes("UTF-8");
-		
-		operations.scheduleData(data, timestamp);
 	}
 	
 	private String join(List<String> entries, String delimiter) {

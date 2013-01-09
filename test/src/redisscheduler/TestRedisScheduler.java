@@ -19,7 +19,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -30,7 +29,6 @@ import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.Response;
 import redis.clients.jedis.Transaction;
-import redis.clients.jedis.exceptions.JedisNilMultiBulkReply;
 import redissceduler.Operations;
 import redissceduler.RedisScheduler;
 import redissceduler.RedisSchedulerJob;
@@ -269,12 +267,14 @@ EXEC
 			zremResponse = zrem.get();
 			assertNotNull(zremResponse);
 		} else {
+			/*
 			try {
 				List<Object> allResponses = transaction.exec();
 				Assert.fail();
 			} catch (JedisNilMultiBulkReply e) {
 				
 			}
+			*/
 		}
 			
 	}

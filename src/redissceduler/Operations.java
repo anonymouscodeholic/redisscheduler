@@ -128,7 +128,7 @@ public class Operations {
 			if (delCount == null || delCount != 1) {
 				throw new IllegalStateException("Not deleted in dataKey: " + id);
 			}
-			log.debug("delted with id: " + id);
+			log.debug("deleted with id: " + id);
 			jedisPool.returnResource(jedis);
 			jedis = null;
 			
