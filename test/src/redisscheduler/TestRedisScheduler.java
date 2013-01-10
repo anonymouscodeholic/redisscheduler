@@ -48,7 +48,7 @@ public class TestRedisScheduler {
 		String sortedSetKey = "key";
 		String sequenceKey = "sequenceKey";
 		String dataKey = "dataKey";
-		redisScheduler = new RedisScheduler(jedisPool, sortedSetKey, sequenceKey, dataKey);		
+		redisScheduler = new RedisScheduler(jedisPool, sortedSetKey, sequenceKey, dataKey, 1);		
 		operations = new Operations(jedisPool, sortedSetKey.getBytes("UTF-8"), sequenceKey.getBytes("UTF-8"), dataKey.getBytes("UTF-8"));
 		operations.flushAll();
 	}

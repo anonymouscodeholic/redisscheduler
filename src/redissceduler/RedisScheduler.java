@@ -7,6 +7,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import redis.clients.jedis.JedisPool;
 
@@ -32,17 +37,22 @@ public class RedisScheduler {
 	private final byte[] dataKey;
 
 	private final Operations operations;
-	private RedisSchedulerRunnable redisSchedulerRunnable;
-	private Thread thread;
+	private final int executorCount;
 
+	private ThreadPoolExecutor executor;
+
+	AtomicInteger id;
+	
 	/**
 	 * 
 	 * @param jedisPool the connection pool for Redis instance.
-	 * @param key
 	 * @param sequenceKey
 	 * @param dataKey
+	 * @param executorCount
+	 * @param key
 	 */
-	public RedisScheduler(JedisPool jedisPool, String sortedSetKey, String sequenceKey, String dataKey) {
+	public RedisScheduler(JedisPool jedisPool, String sortedSetKey, String sequenceKey, String dataKey, int executorCount) {
+		this.executorCount = executorCount;
 		this.sortedSetKey = sortedSetKey.getBytes();
 		this.sequenceKey = sequenceKey.getBytes();
 		this.dataKey = dataKey.getBytes();
@@ -54,18 +64,33 @@ public class RedisScheduler {
 	 * Starts the polling and executing the jobs.
 	 */
 	public void start() {
-		this.redisSchedulerRunnable = new RedisSchedulerRunnable(operations);
-		this.thread = new Thread(redisSchedulerRunnable, "RedisScheduler");
-		this.thread.start();
+		this.id = new AtomicInteger(0);
+		LinkedBlockingQueue<Runnable> queue = new LinkedBlockingQueue<Runnable>();
+		executor = new ThreadPoolExecutor(this.executorCount, this.executorCount, 1, TimeUnit.MINUTES, queue, new ThreadFactory() {
+			@Override
+			public Thread newThread(Runnable runnable) {
+				return new Thread(runnable, "RedisScheduler-" + (id.incrementAndGet()));
+			}
+		});
+		for (int i = 0; i < this.executorCount; i++) {
+			executor.execute(new RedisSchedulerRunnable(operations));
+		}
 	}
 	
 	/**
 	 * Stops the polling and executing the jobs.
 	 */
-	public void stop() {
-		this.redisSchedulerRunnable.stop();
-		this.thread.interrupt();
+	public void shutdown() {
+		this.executor.shutdown();
 	}
+
+	/**
+	 * More aggressively than <code>shutdown</code> shuts down.
+	 */
+	public void shutdownNow() {
+		this.executor.shutdownNow();
+	}
+
 	
 	/**
 	 * Schedules a <code>RedisSchedulerJob</code> to be executed at a certain point of time (at <code>timestamp</code>)

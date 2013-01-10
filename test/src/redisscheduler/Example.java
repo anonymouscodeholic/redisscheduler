@@ -33,7 +33,7 @@ public class Example {
 
 		// RedisScheduler uses three keys in Redis.
 		// The keys need to be such that they don't overlap with other keys in your Redis server
-		RedisScheduler redisScheduler = new RedisScheduler(jedisPool, "RS_SSK", "RS_SK", "RS_DK"); 
+		RedisScheduler redisScheduler = new RedisScheduler(jedisPool, "RS_SSK", "RS_SK", "RS_DK", 10); 
 
 		// Start polling
 		redisScheduler.start();
@@ -49,6 +49,14 @@ public class Example {
 		log.info("Main thread waited six seconds");
 		
 		// Stop polling
-		redisScheduler.stop();
+		redisScheduler.shutdown();
+		
+		// Shutdown doesn't shutdown immediately if there are pending jobs
+		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+		}
+		
+		redisScheduler.shutdownNow();		
 	}
 }

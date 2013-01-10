@@ -1,5 +1,7 @@
 package redissceduler;
 
+import java.util.Random;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,13 +12,13 @@ public class RedisSchedulerRunnable implements Runnable {
 	private volatile boolean running;
 
 	public RedisSchedulerRunnable(Operations operations) {
-		this.operations = operations;
-		
+		this.operations = operations;		
 		this.running = true;
 	}
 
 	@Override
 	public void run() {
+		Random random = new Random();
 		while (running) {
 			try {
 				// Process until nothing left
@@ -27,7 +29,7 @@ public class RedisSchedulerRunnable implements Runnable {
 			}
 			
 			try {
-				Thread.sleep(1000);
+				Thread.sleep(500 + random.nextInt(500));
 			} catch (InterruptedException e) {
 			}
 		}
